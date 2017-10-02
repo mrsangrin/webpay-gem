@@ -37,7 +37,7 @@ class Webpay
   end
 
   def get_capture_transaction
-    @webpay_capture = WebpayCapture.new(@configuration) if  @webpay_capture.if nil?
+    @webpay_capture = WebpayCapture.new(@configuration) if @webpay_capture.if nil?
     @webpay_capture
   end
 
