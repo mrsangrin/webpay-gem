@@ -5,11 +5,12 @@ require_relative 'verifier'
 class WebpayNormal
 
   SAVON_DEFAULT_OPTS = {
-    log_level: :debug,
-    open_timeout: 10,
-    read_timeout: 10,
-    log: true
-  }
+      log_level: :debug,
+      open_timeout: 10,
+      read_timeout: 10,
+      log: true}
+
+
   def initialize(configuration, savon_client_opts = SAVON_DEFAULT_OPTS)
     @wsdl_path = ''
     @environment = configuration.environment
@@ -30,24 +31,27 @@ class WebpayNormal
     @private_key = OpenSSL::PKey::RSA.new(configuration.private_key)
     @public_cert = OpenSSL::X509::Certificate.new(configuration.public_cert)
     @webpay_cert = OpenSSL::X509::Certificate.new(configuration.webpay_cert)
-    @client = Savon.client(wsdl: @wsdl_path, savon_client_opts)
+
+    savon_options = {wsdl: @wsdl_path}
+    savon_options.merge!(savon_client_opts)
+    @client = Savon.client(savon_options)
 
   end
 
   def init_transaction(amount, buyOrder, sessionId, urlReturn, urlFinal)
     initInput = {
-      'wsInitTransactionInput' => {
-        'wSTransactionType' => 'TR_NORMAL_WS',
-        'buyOrder' => buyOrder,
-        'sessionId' => sessionId,
-        'returnURL' => urlReturn,
-        'finalURL' => urlFinal,
-        'transactionDetails' => {
-          'amount' => amount,
-          'commerceCode' => @commerce_code,
-          'buyOrder' => buyOrder
+        'wsInitTransactionInput' => {
+            'wSTransactionType' => 'TR_NORMAL_WS',
+            'buyOrder' => buyOrder,
+            'sessionId' => sessionId,
+            'returnURL' => urlReturn,
+            'finalURL' => urlFinal,
+            'transactionDetails' => {
+                'amount' => amount,
+                'commerceCode' => @commerce_code,
+                'buyOrder' => buyOrder
+            }
         }
-      }
     }
 
     req = @client.build_request(:init_transaction, message: initInput)
@@ -62,7 +66,7 @@ class WebpayNormal
       end
     rescue Exception, RuntimeError => e
       puts "Ocurrio un error en la llamada a Webpay para #{buyOrder} en InitTransaction: #{e.message}"
-      response_array ={
+      response_array = {
           "error_desc" => "Ocurrio un error en la llamada a Webpay para #{buyOrder} en InitTransaction: #{e.message}"
       }
       return response_array
@@ -73,7 +77,7 @@ class WebpayNormal
 
     if !Verifier.verify(response, tbk_cert)
       puts "El Certificado de respuesta es Invalido para #{buyOrder} en InitTransaction"
-      response_array ={
+      response_array = {
           "error_desc" => 'El Certificado de respuesta es Invalido'
       }
       return response_array
@@ -95,9 +99,9 @@ class WebpayNormal
     puts "url para #{buyOrder} es #{url}"
 
     response_array = {
-      'token' => token.to_s,
-      'url' => url.to_s,
-      'error_desc' => 'TRX_OK'
+        'token' => token.to_s,
+        'url' => url.to_s,
+        'error_desc' => 'TRX_OK'
     }
 
     response_array
@@ -105,7 +109,7 @@ class WebpayNormal
 
   def get_transaction_result(token)
     getResultInput = {
-      'tokenInput' => token
+        'tokenInput' => token
     }
 
     # Preparacion firma
@@ -121,7 +125,7 @@ class WebpayNormal
       end
     rescue Exception, RuntimeError => e
       puts "Ocurrio un error en la llamada a Webpay para #{token} en GetResult: #{e.message}"
-      response_array ={
+      response_array = {
           "error_desc" => "Ocurrio un error en la llamada a Webpay para #{token} en GetResult: #{e.message}"
       }
       return response_array
@@ -132,7 +136,7 @@ class WebpayNormal
       puts "Respuesta GetResult para #{token}: #{response.to_s}"
     else
       puts "Webservice Webpay responde con null para #{token}"
-      response_array ={
+      response_array = {
           "error_desc" => 'Webservice Webpay responde con null'
       }
       return response_array
@@ -143,7 +147,7 @@ class WebpayNormal
 
     if !Verifier.verify(response, tbk_cert)
       puts "El Certificado de respuesta es Invalido para #{token} en GetResult"
-      response_array ={
+      response_array = {
           "error_desc" => 'El Certificado de respuesta es Invalido'
       }
       return response_array
@@ -154,25 +158,25 @@ class WebpayNormal
     response_document = Nokogiri::HTML(response.to_s)
 
     {
-      'accounting_date' => response_document.xpath('//accountingdate').text.to_s,
-      'buy_order' => response_document.at_xpath('//buyorder').text.to_s,
-      'card_number' => response_document.xpath('//cardnumber').text.to_s,
-      'amount' => response_document.xpath('//amount').text.to_s,
-      'commerce_code' => response_document.xpath('//commercecode').text.to_s,
-      'authorization_code' => response_document.xpath('//authorizationcode').text.to_s,
-      'payment_type_code' => response_document.xpath('//paymenttypecode').text.to_s,
-      'response_code' => response_document.xpath('//responsecode').text.to_s,
-      'transaction_date' => response_document.xpath('//transactiondate').text.to_s,
-      'url_redirection' => response_document.xpath('//urlredirection').text.to_s,
-      'vci' => response_document.xpath('//vci').text.to_s,
-      'shares_number' => response_document.xpath('//sharesnumber').text.to_s,
-      'error_desc' => 'TRX_OK'
+        'accounting_date' => response_document.xpath('//accountingdate').text.to_s,
+        'buy_order' => response_document.at_xpath('//buyorder').text.to_s,
+        'card_number' => response_document.xpath('//cardnumber').text.to_s,
+        'amount' => response_document.xpath('//amount').text.to_s,
+        'commerce_code' => response_document.xpath('//commercecode').text.to_s,
+        'authorization_code' => response_document.xpath('//authorizationcode').text.to_s,
+        'payment_type_code' => response_document.xpath('//paymenttypecode').text.to_s,
+        'response_code' => response_document.xpath('//responsecode').text.to_s,
+        'transaction_date' => response_document.xpath('//transactiondate').text.to_s,
+        'url_redirection' => response_document.xpath('//urlredirection').text.to_s,
+        'vci' => response_document.xpath('//vci').text.to_s,
+        'shares_number' => response_document.xpath('//sharesnumber').text.to_s,
+        'error_desc' => 'TRX_OK'
     }
   end
 
   def acknowledge_transaction(token)
     acknowledgeInput = {
-      'tokenInput' => token
+        'tokenInput' => token
     }
 
     # Preparacion firma
@@ -189,7 +193,7 @@ class WebpayNormal
       end
     rescue Exception, RuntimeError => e
       puts "Ocurrio un error en la llamada a Webpay para #{token} en acknowledge_transaction:  #{e.message}"
-      response_array ={
+      response_array = {
           "error_desc" => "Ocurrio un error en la llamada a Webpay para #{token} en acknowledge_transaction:  #{e.message}"
       }
       return response_array
@@ -200,7 +204,7 @@ class WebpayNormal
       puts "Respuesta acknowledge_transaction para #{token} : #{response.to_s}"
     else
       puts "Webservice Webpay responde con null para #{token} en acknowledge_transaction"
-      response_array ={
+      response_array = {
           "error_desc" => 'Webservice Webpay responde con null'
       }
       return response_array
@@ -211,7 +215,7 @@ class WebpayNormal
 
     if !Verifier.verify(response, tbk_cert)
       puts "El Certificado de respuesta es Invalido para #{token} en acknowledge_transaction"
-      response_array ={
+      response_array = {
           "error_desc" => 'El Certificado de respuesta es Invalido'
       }
       return response_array
@@ -220,7 +224,7 @@ class WebpayNormal
     end
 
     response_array = {
-      'error_desc' => 'TRX_OK'
+        'error_desc' => 'TRX_OK'
     }
     response_array
   end
