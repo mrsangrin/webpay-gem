@@ -26,7 +26,6 @@ class WebpayNormal
     @client = Savon.client(wsdl: @wsdl_path)
   end
 
-  #######################################################
   def init_transaction(amount, buyOrder, sessionId, urlReturn, urlFinal)
     initInput = {
       'wsInitTransactionInput' => {
